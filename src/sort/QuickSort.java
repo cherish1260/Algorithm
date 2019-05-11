@@ -1,5 +1,11 @@
 package sort;
 
+/**
+ * 快排
+ *  时间复杂度：平均O(nlogn)；最差O(n^2)
+ *  不是稳定排序：因为涉及到交换
+ *  是原地排序：没有额外的申请空间
+ */
 public class QuickSort {
 
     /**
