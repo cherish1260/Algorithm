@@ -1,4 +1,4 @@
-package sort;
+package utils;
 
 public class Util {
     /**
@@ -8,7 +8,7 @@ public class Util {
     public static void printArray(int[] array) {
         for (int i = 0; i< array.length; i++) {
             if (i == array.length - 1) {
-                System.out.print(array[i]);
+                System.out.println(array[i]);
             } else {
                 System.out.print(array[i] + ", ");
             }
