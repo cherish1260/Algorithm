@@ -11,7 +11,8 @@ public class Main {
 //        MergeSort.mergeSort(array, 0, array.length - 1);
 //        BubbleSort.bubbleSort(array);
 //        InsertSort.insertSort(array);
-        SelectSort.selectSort(array);
+//        SelectSort.selectSort(array);
+        HeapSort.heatSort(array);
         Util.printArray(array);
 //        查找
 //        int pos = BitSearch.bitSearch(array, 44);
