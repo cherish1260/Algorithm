@@ -5,9 +5,17 @@ package data;
  */
 public class Node {
     int i;
-    Node next;
+    public Node next;
 
     public Node(int i) {
+        this.i = i;
+    }
+
+    public int getI() {
+        return i;
+    }
+
+    public void setI(int i) {
         this.i = i;
     }
 }

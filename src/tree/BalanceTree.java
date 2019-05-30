@@ -221,4 +221,40 @@ public class BalanceTree {
             }
         }
     }
+
+    /**
+     * 获取二叉树的宽度
+     * 主要思想：使用广度优先，记录每层的宽度，最终选择最大的宽度
+     *
+     * @param root
+     * @return
+     */
+    public static int  getWidth(TreeNode root) {
+        Queue<TreeNode> queue = new LinkedList<>();
+        if (root == null) {
+            return 0 ;
+        } else {
+            queue.add(root);
+        }
+        int width = 1;
+        int preLevelWidth = 1;
+        TreeNode node = null;
+        while (!queue.isEmpty()) {
+            while(preLevelWidth != 0) {
+                node = queue.poll();
+                if (node.leftChild != null) {
+                    queue.add(node.leftChild);
+                }
+                if (node.rightChild != null) {
+                    queue.add(node.rightChild);
+                }
+                preLevelWidth--;
+            }
+            if (queue.size() > width) {
+                width = queue.size();
+            }
+            preLevelWidth = queue.size();
+        }
+        return width;
+    }
 }
