@@ -45,20 +45,24 @@ public class DiffMatchPatchUtil {
 
     /**
      * Number of seconds to map a diff before giving up (0 for infinity).
+     * 放弃之前映射差异的秒数(0为无穷大)。
      */
     public float Diff_Timeout = 1.0f;
     /**
      * Cost of an empty edit operation in terms of edit characters.
+     * 按编辑字符计算的空编辑操作的成本。
      */
     public short Diff_EditCost = 4;
     /**
      * At what point is no match declared (0.0 = perfection, 1.0 = very loose).
+     * 什么时候没有声明匹配(0.0 =完美，1.0 =非常松散)
      */
     public float Match_Threshold = 0.5f;
     /**
      * How far to search for a match (0 = exact location, 1000+ = broad match).
      * A match this many characters away from the expected location will add
      * 1.0 to the score (0.0 is a perfect match).
+     * 搜索匹配项的距离(0 =精确位置，1000+ =广泛匹配)。距离期望位置这么多字符的匹配将为得分添加1.0(0.0是一个完美的匹配)。
      */
     public int Match_Distance = 1000;
     /**
@@ -66,21 +70,25 @@ public class DiffMatchPatchUtil {
      * the contents have to be to match the expected contents. (0.0 = perfection,
      * 1.0 = very loose).  Note that Match_Threshold controls how closely the
      * end points of a delete need to match.
+     * 当删除一个大的文本块(超过64个字符)时，内容必须与预期的内容匹配到什么程度。(0.0 =完美，1.0 =非常松散)。
+     * 注意，Match_Threshold控制了delete的端点需要匹配的紧密程度。
      */
     public float Patch_DeleteThreshold = 0.5f;
     /**
-     * Chunk size for context length.
+     * 上下文长度的块大小。
      */
     public short Patch_Margin = 4;
 
     /**
-     * The number of bits in an int.
+     * int里的bit数
      */
     private short Match_MaxBits = 32;
 
     /**
      * Internal class for returning results from diff_linesToChars().
      * Other less paranoid languages just use a three-element array.
+     * 返回diff_linesToChars()的结果的内部类。
+     * 其他不那么偏执的语言只使用一个三元素数组
      */
     protected static class LinesToCharsResult {
         /**
@@ -120,18 +128,22 @@ public class DiffMatchPatchUtil {
      * {Diff(Operation.DELETE, "Hello"), Diff(Operation.INSERT, "Goodbye"),
      * Diff(Operation.EQUAL, " world.")}
      * which means: delete "Hello", add "Goodbye" and keep " world."
+     * 要做的操作
      */
     public enum Operation {
         /**
          * Delete operation.
+         * 删除操作
          */
         DELETE,
         /**
          * Insert operation.
+         * 插入操作
          */
         INSERT,
         /**
          * Equal operation.
+         * 匹配操作，无修改
          */
         EQUAL
     }
@@ -141,6 +153,7 @@ public class DiffMatchPatchUtil {
      * Run a faster, slightly less optimal diff.
      * This method allows the 'checklines' of diff_main() to be optional.
      * Most of the time checklines is wanted, so default to true.
+     * 找出两个字符串的差异
      *
      * @param text1 Old string to be diffed.
      * @param text2 New string to be diffed.
@@ -156,11 +169,13 @@ public class DiffMatchPatchUtil {
      * @param text1      Old string to be diffed.
      * @param text2      New string to be diffed.
      * @param checklines Speedup flag.  If false, then don't run a     line-level diff first to identify the changed areas.     If true, then run a faster slightly less optimal diff.
+     *                   加速标记，如果是false，那么不会先执行行级别的diff去识别改变的区域
      * @return Linked List of Diff objects.
      */
     public LinkedList<Diff> diff_main(String text1, String text2,
                                       boolean checklines) {
         // Set a deadline by which time the diff must be complete.
+        // 设置一个diff截止时间，即在某个时间之前必须完成
         long deadline;
         if (Diff_Timeout <= 0) {
             deadline = Long.MAX_VALUE;
@@ -190,7 +205,7 @@ public class DiffMatchPatchUtil {
             throw new IllegalArgumentException("Null inputs. (diff_main)");
         }
 
-        // Check for equality (speedup).
+        // Check for equality (speedup). 先判断两个字符串是否相等，如果相同直接做标记，不需进行后面的操作
         LinkedList<Diff> diffs;
         if (text1.equals(text2)) {
             diffs = new LinkedList<Diff>();
@@ -200,29 +215,33 @@ public class DiffMatchPatchUtil {
             return diffs;
         }
 
-        // Trim off common prefix (speedup).
+        // Trim off common prefix (speedup). 获取相同前缀长度
         int commonlength = diff_commonPrefix(text1, text2);
         String commonprefix = text1.substring(0, commonlength);
         text1 = text1.substring(commonlength);
         text2 = text2.substring(commonlength);
 
-        // Trim off common suffix (speedup).
+        // Trim off common suffix (speedup).获取相同后缀
         commonlength = diff_commonSuffix(text1, text2);
         String commonsuffix = text1.substring(text1.length() - commonlength);
         text1 = text1.substring(0, text1.length() - commonlength);
         text2 = text2.substring(0, text2.length() - commonlength);
 
-        // Compute the diff on the middle block.
+        // Compute the diff on the middle block. 计算中间区域的diff
         diffs = diff_compute(text1, text2, checklines, deadline);
 
         // Restore the prefix and suffix.
+        // 存储相同前缀和相同后缀
         if (commonprefix.length() != 0) {
+            // 在list的开始处插入指定的数据
             diffs.addFirst(new Diff(Operation.EQUAL, commonprefix));
         }
         if (commonsuffix.length() != 0) {
+            // 在list的结尾处插入指定的数据
             diffs.addLast(new Diff(Operation.EQUAL, commonsuffix));
         }
 
+        // 将diff该合并的合并
         diff_cleanupMerge(diffs);
         return diffs;
     }
@@ -243,6 +262,7 @@ public class DiffMatchPatchUtil {
                                           boolean checklines, long deadline) {
         LinkedList<Diff> diffs = new LinkedList<Diff>();
 
+        // 处理字符串为空的情况
         if (text1.length() == 0) {
             // Just add some text (speedup).
             diffs.add(new Diff(Operation.INSERT, text2));
@@ -255,29 +275,41 @@ public class DiffMatchPatchUtil {
             return diffs;
         }
 
+        // 分别记录长的字符串和短的字符串
         String longtext = text1.length() > text2.length() ? text1 : text2;
         String shorttext = text1.length() > text2.length() ? text2 : text1;
+        // 查看长字符串中是否存在短的字符串
         int i = longtext.indexOf(shorttext);
+        // 如果存在，说明长字符串包含短字符串
         if (i != -1) {
             // Shorter text is inside the longer text (speedup).
+            // 根据两个字符串的长度标记是删除还是添加
             Operation op = (text1.length() > text2.length()) ?
                     Operation.DELETE : Operation.INSERT;
+            // 添加相同字符串位置之前的diff
             diffs.add(new Diff(op, longtext.substring(0, i)));
+            // 添加相同字符串标记
             diffs.add(new Diff(Operation.EQUAL, shorttext));
+            // 添加相同字符串位置之后的diff
             diffs.add(new Diff(op, longtext.substring(i + shorttext.length())));
             return diffs;
         }
 
+        // 长字符串中不包含字符串，如果短字符串长度为1
         if (shorttext.length() == 1) {
             // Single character string.
             // After the previous speedup, the character can't be an equality.
+            // 标记删除源字符串
             diffs.add(new Diff(Operation.DELETE, text1));
+            // 插入新字符串
             diffs.add(new Diff(Operation.INSERT, text2));
             return diffs;
         }
 
         // Check to see if the problem can be split in two.
+        // 检查是否一个问题可以分成两部分去处理
         String[] hm = diff_halfMatch(text1, text2);
+        // 如果可以分为两部分
         if (hm != null) {
             // A half-match was found, sort out the return data.
             String text1_a = hm[0];
@@ -286,8 +318,10 @@ public class DiffMatchPatchUtil {
             String text2_b = hm[3];
             String mid_common = hm[4];
             // Send both pairs off for separate processing.
+            // 前缀相比
             LinkedList<Diff> diffs_a = diff_main(text1_a, text2_a,
                     checklines, deadline);
+            // 后缀相比
             LinkedList<Diff> diffs_b = diff_main(text1_b, text2_b,
                     checklines, deadline);
             // Merge the results.
@@ -297,10 +331,12 @@ public class DiffMatchPatchUtil {
             return diffs;
         }
 
+        // 没有找到大于一半字符以上的，且字符串长度均大于100，则进行行模式
         if (checklines && text1.length() > 100 && text2.length() > 100) {
             return diff_lineMode(text1, text2, deadline);
         }
 
+        // 否则进行递归处理
         return diff_bisect(text1, text2, deadline);
     }
 
@@ -322,9 +358,11 @@ public class DiffMatchPatchUtil {
         text2 = b.chars2;
         List<String> linearray = b.lineArray;
 
+        // 将新生成的text去做diff
         LinkedList<Diff> diffs = diff_main(text1, text2, false, deadline);
 
         // Convert the diff back to original text.
+        // 将diff转化为真实的line内容
         diff_charsToLines(diffs, linearray);
         // Eliminate freak matches (e.g. blank lines)
         diff_cleanupSemantic(diffs);
@@ -380,6 +418,7 @@ public class DiffMatchPatchUtil {
      * and return the recursively constructed diff.
      * See Myers 1986 paper: An O(ND) Difference Algorithm and Its Variations.
      *
+     * 将问题一分为二进行递归处理
      * @param text1    Old string to be diffed.
      * @param text2    New string to be diffed.
      * @param deadline Time at which to bail if not yet complete.
@@ -528,6 +567,8 @@ public class DiffMatchPatchUtil {
      * Split two texts into a list of strings.  Reduce the texts to a string of
      * hashes where each Unicode character represents one line.
      *
+     * 将text分割成一系列string，将文本缩减为一个散列字符串，其中每个Unicode字符表示一行。
+     *
      * @param text1 First string.
      * @param text2 Second string.
      * @return An object containing the encoded text1, the encoded text2 and     the List of unique strings.  The zeroth element of the List of     unique strings is intentionally blank.
@@ -550,6 +591,8 @@ public class DiffMatchPatchUtil {
     /**
      * Split a text into a list of strings.  Reduce the texts to a string of
      * hashes where each Unicode character represents one line.
+     *
+     * 用\n分割字符串，并存入lineHash，返回拼接的字符串
      *
      * @param text      String to encode.
      * @param lineArray List of unique strings.
@@ -587,6 +630,7 @@ public class DiffMatchPatchUtil {
     /**
      * Rehydrate the text in a diff from a string of line hashes to real lines of
      * text.
+     * 将diff转换为真实的line
      *
      * @param diffs     LinkedList of Diff objects.
      * @param lineArray List of unique strings.
@@ -605,6 +649,7 @@ public class DiffMatchPatchUtil {
 
     /**
      * Determine the common prefix of two strings
+     * 获取两个string相同的前缀长度
      *
      * @param text1 First string.
      * @param text2 Second string.
@@ -623,6 +668,7 @@ public class DiffMatchPatchUtil {
 
     /**
      * Determine the common suffix of two strings
+     * 获取相同后缀
      *
      * @param text1 First string.
      * @param text2 Second string.
@@ -693,25 +739,33 @@ public class DiffMatchPatchUtil {
      * the longer text?
      * This speedup can produce non-minimal diffs.
      *
+     * 两个字符串是否含有相同的字符串，且相同字符串的长度至少是长字符串的一半
+     * 算法实际上是寻找最长字符串，且字符串长度需是长字符串的一半以上
+     *
      * @param text1 First string.
      * @param text2 Second string.
      * @return Five element String array, containing the prefix of text1, the     suffix of text1, the prefix of text2, the suffix of text2 and the     common middle.  Or null if there was no match.
+     *          返回值：如果没有找到则返回null，否则，包含：text1的前缀，text1的后缀，text2的前缀，text2的后缀，以及相同区域
      */
     protected String[] diff_halfMatch(String text1, String text2) {
         if (Diff_Timeout <= 0) {
             // Don't risk returning a non-optimal diff if we have unlimited time.
             return null;
         }
+        // 分别记录长短字符串
         String longtext = text1.length() > text2.length() ? text1 : text2;
         String shorttext = text1.length() > text2.length() ? text2 : text1;
+        // 长字符串太小，或者短字符串的二倍比长字符串短，那么直接返回null
         if (longtext.length() < 4 || shorttext.length() * 2 < longtext.length()) {
             return null;  // Pointless.
         }
 
         // First check if the second quarter is the seed for a half-match.
+        // 从1/4出进行检查，找前半部分
         String[] hm1 = diff_halfMatchI(longtext, shorttext,
                 (longtext.length() + 3) / 4);
         // Check again based on the third quarter.
+        // 从1/2去进行检查，找后半部分
         String[] hm2 = diff_halfMatchI(longtext, shorttext,
                 (longtext.length() + 1) / 2);
         String[] hm;
@@ -739,12 +793,15 @@ public class DiffMatchPatchUtil {
      * Does a substring of shorttext exist within longtext such that the
      * substring is at least half the length of longtext?
      *
+     * longtext中是否存在shorttext的子字符串，该子字符串的长度至少是longtext长度的一半?
+     *
      * @param longtext  Longer string.
      * @param shorttext Shorter string.
      * @param i         Start index of quarter length substring within longtext.
      * @return Five element String array, containing the prefix of longtext, the
      * suffix of longtext, the prefix of shorttext, the suffix of shorttext
      * and the common middle.  Or null if there was no match.
+     * 匹配的情况下的返回：longtext的前缀、后缀，shorttext的前缀、后缀，相同的部分
      */
     private String[] diff_halfMatchI(String longtext, String shorttext, int i) {
         // Start with a 1/4 length substring at position i as a seed.
@@ -753,12 +810,17 @@ public class DiffMatchPatchUtil {
         String best_common = "";
         String best_longtext_a = "", best_longtext_b = "";
         String best_shorttext_a = "", best_shorttext_b = "";
+        // 每次都找到seed位置，从该位置之后进行计算
         while ((j = shorttext.indexOf(seed, j + 1)) != -1) {
+            // 找到两个有相同字符串处的相同前缀
             int prefixLength = diff_commonPrefix(longtext.substring(i),
                     shorttext.substring(j));
+            // 找到两个前面有相同字符串处的相同后缀
             int suffixLength = diff_commonSuffix(longtext.substring(0, i),
                     shorttext.substring(0, j));
+            // 后缀 + 前缀长度 > best_common
             if (best_common.length() < suffixLength + prefixLength) {
+                // 相同部分
                 best_common = shorttext.substring(j - suffixLength, j)
                         + shorttext.substring(j, j + prefixLength);
                 best_longtext_a = longtext.substring(0, i - suffixLength);
@@ -767,6 +829,7 @@ public class DiffMatchPatchUtil {
                 best_shorttext_b = shorttext.substring(j + prefixLength);
             }
         }
+        // 公共部分长度大于2，则找到
         if (best_common.length() * 2 >= longtext.length()) {
             return new String[]{best_longtext_a, best_longtext_b,
                     best_shorttext_a, best_shorttext_b, best_common};
@@ -777,6 +840,8 @@ public class DiffMatchPatchUtil {
 
     /**
      * Reduce the number of edits by eliminating semantically trivial equalities.
+     *
+     * 通过消除语义上无关紧要的等式来减少编辑的数量。
      *
      * @param diffs LinkedList of Diff objects.
      */
@@ -1178,6 +1243,8 @@ public class DiffMatchPatchUtil {
     /**
      * Reorder and merge like edit sections.  Merge equalities.
      * Any edit section can move as long as it doesn't cross an equality.
+     *
+     * 对改动的地方进行重排序和合并，合并相等的字符串
      *
      * @param diffs LinkedList of Diff objects.
      */

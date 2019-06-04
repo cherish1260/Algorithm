@@ -1,5 +1,8 @@
 import array.DynamicArray;
+import data.C;
 import data.Node;
+import diff.DiffMatchPatchUtil;
+import link.ReverseLink;
 import otherstruc.Queue;
 import search.FindMid;
 import sort.HeapSort;
@@ -7,22 +10,32 @@ import tree.BalanceTree;
 import data.TreeNode;
 import utils.Util;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 public class Main {
 
     public static void main(String[] args) {
-        testSort();
-        testSearch();
-        testTree();
-        DynamicArray dyArray = new DynamicArray(4);
-        dyArray.add(0, 5);
-        dyArray.add(1, 6);
-        dyArray.add(2, 7);
-        dyArray.add(3, 8);
-        dyArray.printArray();
-        dyArray.remove(3);
-        dyArray.printArray();
+//        testSort();
+//        testSearch();
+//        testTree();
+//        testDynamicArray();
+//        testDiff();
+//        System.out.println(C.c);
+        testLink();
+        HashMap<String, String> hm = new HashMap<>();
+
+    }
+
+    private static void testDiff() {
+        String text1 = "hello world";
+        String text2 = "hallo wod";
+        DiffMatchPatchUtil diffMatchPatchUtil = new DiffMatchPatchUtil();
+        LinkedList<DiffMatchPatchUtil.Diff> result = diffMatchPatchUtil.diff_main(text1, text2);
+        System.out.println(result);
 
     }
 
@@ -99,5 +112,30 @@ public class Main {
         System.out.println("------------------------");
         System.out.println("树的当前宽度为：" + BalanceTree.getWidth(root));
         System.out.println("树的当前高度为：" + BalanceTree.getTreeDepth(root));
+    }
+
+    public static void testDynamicArray() {
+        DynamicArray dyArray = new DynamicArray(4);
+        dyArray.add(0, 5);
+        dyArray.add(1, 6);
+        dyArray.add(2, 7);
+        dyArray.add(3, 8);
+        dyArray.printArray();
+        dyArray.remove(3);
+        dyArray.printArray();
+    }
+
+    public static void testLink() {
+        Node node = new Node(0);
+        Node node1 = new Node(1);
+        Node node2 = new Node(2);
+        Node node3 = new Node(3);
+        Node node4 = new Node(4);
+        node.next = node1;
+        node1.next = node2;
+        node2.next = node3;
+        node3.next = node4;
+        Node result = ReverseLink.reverseLink2(node);
+        Util.printNodeLink(result);
     }
 }

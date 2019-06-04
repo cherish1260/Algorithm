@@ -1,5 +1,7 @@
 package utils;
 
+import data.Node;
+
 public class Util {
     /**
      * 打印数组的每个值
@@ -25,5 +27,15 @@ public class Util {
         int temp = array[i];
         array[i] = array[j];
         array[j] = temp;
+    }
+
+    public static void printNodeLink(Node head) {
+        if (head == null){
+            return;
+        }
+        while(head != null) {
+            System.out.println(head.getI());
+            head = head.next;
+        }
     }
 }
