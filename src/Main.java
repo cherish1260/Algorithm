@@ -1,3 +1,4 @@
+import apple.laf.JRSUIUtils;
 import array.DynamicArray;
 import data.C;
 import data.Node;
@@ -6,10 +7,12 @@ import link.ReverseLink;
 import otherstruc.Queue;
 import search.FindMid;
 import sort.HeapSort;
+import thread.TestCallable;
 import tree.BalanceTree;
 import data.TreeNode;
 import utils.Util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,16 +21,54 @@ import java.util.concurrent.FutureTask;
 
 public class Main {
 
+    public static String A = "A";
+    public static String B = "B";
+
     public static void main(String[] args) {
-//        testSort();
+        testSort();
 //        testSearch();
 //        testTree();
 //        testDynamicArray();
 //        testDiff();
 //        System.out.println(C.c);
-        testLink();
-        HashMap<String, String> hm = new HashMap<>();
+//        testLink();
+//        TestCallable testCallable = new TestCallable();
+//        testCallable.testCall();
 
+    }
+
+    /**
+     * 死锁的例子
+     */
+    private static void deadLockExample() {
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (A) {
+                    try {
+                        // 为了让当前线性不能立即获取到B锁
+                        Thread.currentThread().sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    synchronized (B) {
+                        System.out.println("我是线程1");
+                    }
+                }
+            }
+        });
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (B) {
+                    synchronized (A) {
+                        System.out.println("我是线程2");
+                    }
+                }
+            }
+        });
+        thread1.start();
+        thread2.start();
     }
 
     private static void testDiff() {
@@ -40,14 +81,14 @@ public class Main {
     }
 
     public static void testSort() {
-        int array[] = {9, 28, 44, 3, 4, 55, 19};
+        int array[] = {4,5,1,6,2,7,3,8};
         // 排序测试
 //        QuickSort.quickSort1(array, 0, array.length - 1);
 //        MergeSort.mergeSort(array, 0, array.length - 1);
 //        BubbleSort.bubbleSort(array);
 //        InsertSort.insertSort(array);
 //        SelectSort.selectSort(array);
-        HeapSort.heatSort(array);
+        HeapSort.heatSort2(array);
         Util.printArray(array);
 
     }
