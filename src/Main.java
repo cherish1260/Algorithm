@@ -7,6 +7,7 @@ import link.ReverseLink;
 import otherstruc.Queue;
 import search.FindMid;
 import sort.HeapSort;
+import thread.Counter;
 import thread.TestCallable;
 import tree.BalanceTree;
 import data.TreeNode;
@@ -25,7 +26,7 @@ public class Main {
     public static String B = "B";
 
     public static void main(String[] args) {
-        testSort();
+//        testSort();
 //        testSearch();
 //        testTree();
 //        testDynamicArray();
@@ -34,7 +35,21 @@ public class Main {
 //        testLink();
 //        TestCallable testCallable = new TestCallable();
 //        testCallable.testCall();
+        threadExample();
 
+    }
+
+    private static void threadExample() {
+        final Counter counter = new Counter();
+        for (int i = 0; i < 1000; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    counter.inc();
+                }
+            }).start();
+        }
+        System.out.println(counter);
     }
 
     /**
@@ -81,7 +96,7 @@ public class Main {
     }
 
     public static void testSort() {
-        int array[] = {4,5,1,6,2,7,3,8};
+        int array[] = {4, 5, 1, 6, 2, 7, 3, 8};
         // 排序测试
 //        QuickSort.quickSort1(array, 0, array.length - 1);
 //        MergeSort.mergeSort(array, 0, array.length - 1);
